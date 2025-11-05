@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import LoginForm from "@/components/LoginForm";
-import { toast } from "@/components/ui/sonner";
+import { useToast } from "@/components/ui/use-toast"; // Fixed import
 import { handleBotResponse } from "@/lib/botLogic";
 
 export default function CustomerChat() {
   const { user, login, logout } = useAuth();
   const { conversations, addMessage, updateConversation } = useChat();
+  const { toast } = useToast(); // Correct usage
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -30,7 +31,7 @@ export default function CustomerChat() {
       setConversationId(id);
       if (!conversations[id]) updateConversation(id, []);
     }
-  }, [user]);
+  }, [user, conversations]);
 
   const handleSend = async () => {
     if (!input.trim() || !conversationId) return;
@@ -52,7 +53,10 @@ export default function CustomerChat() {
     if (botReply.toLowerCase().includes("escalating")) {
       const ticketId = `ticket_${Date.now()}`;
       updateConversation(ticketId, conversations[conversationId] || []);
-      toast({ title: "Ticket Created", description: ticketId });
+      toast({
+        title: "Ticket Created",
+        description: `Your ticket ID: ${ticketId}`,
+      });
     }
   };
 

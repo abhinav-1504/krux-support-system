@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Search } from "lucide-react";
 import LoginForm from "@/components/LoginForm";
-import { toast } from "@/components/ui/sonner";
+import { useToast } from "@/components/ui/use-toast"; // Fixed import
 
 export default function SupportDashboard() {
   const { user, login, logout } = useAuth();
   const { conversations, addMessage } = useChat();
+  const { toast } = useToast(); // Correct usage
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,7 +34,10 @@ export default function SupportDashboard() {
       timestamp: new Date().toISOString(),
     });
     setInput("");
-    toast({ title: "Sent", description: "Customer notified" });
+    toast({
+      title: "Message Sent",
+      description: "Customer will see your reply instantly",
+    });
   };
 
   if (!user || user.role !== "agent") {
@@ -75,7 +79,7 @@ export default function SupportDashboard() {
                 <Input
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleSend()}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
                   placeholder="Reply to customer..."
                   className="flex-1"
                 />
@@ -87,7 +91,7 @@ export default function SupportDashboard() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-2xl text-gray-400">
-            ← Pick a ticket
+            Pick a ticket
           </div>
         )}
       </main>
