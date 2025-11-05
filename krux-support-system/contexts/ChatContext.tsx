@@ -1,25 +1,16 @@
+// contexts/ChatContext.tsx
 "use client";
 
 import { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
-
-interface Message {
-  text: string;
-  sender: string;
-  timestamp: string;
-}
-
-interface Conversations {
-  [key: string]: Message[];
-}
+import { Message, Conversation } from "@/types";
 
 interface ChatState {
-  conversations: Conversations;
+  conversations: Conversation;
 }
 
 type Action =
   | { type: "ADD_MESSAGE"; conversationId: string; message: Message }
-  | { type: "UPDATE_CONVERSATION"; conversationId: string; messages: Message[] }
-  | { type: "UPDATE_TICKET_STATUS"; ticketId: string; status: string };
+  | { type: "UPDATE_CONVERSATION"; conversationId: string; messages: Message[] };
 
 const initialState: ChatState = {
   conversations: {},
@@ -32,7 +23,10 @@ function chatReducer(state: ChatState, action: Action): ChatState {
         ...state,
         conversations: {
           ...state.conversations,
-          [action.conversationId]: [...(state.conversations[action.conversationId] || []), action.message],
+          [action.conversationId]: [
+            ...(state.conversations[action.conversationId] || []),
+            action.message,
+          ],
         },
       };
     case "UPDATE_CONVERSATION":
@@ -43,18 +37,15 @@ function chatReducer(state: ChatState, action: Action): ChatState {
           [action.conversationId]: action.messages,
         },
       };
-    case "UPDATE_TICKET_STATUS":
-      return state;
     default:
       return state;
   }
 }
 
 interface ChatContextType {
-  conversations: Conversations;
+  conversations: Conversation;
   addMessage: (conversationId: string, message: Message) => void;
   updateConversation: (conversationId: string, messages: Message[]) => void;
-  updateTicketStatus: (ticketId: string, status: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -65,9 +56,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("conversations");
     if (stored) {
-      dispatch({ type: "UPDATE_CONVERSATION", conversationId: "", messages: [] }); // Dummy to load
       const parsed = JSON.parse(stored);
-      Object.keys(parsed).forEach(key => {
+      Object.keys(parsed).forEach((key) => {
         dispatch({ type: "UPDATE_CONVERSATION", conversationId: key, messages: parsed[key] });
       });
     }
@@ -85,12 +75,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_CONVERSATION", conversationId, messages });
   };
 
-  const updateTicketStatus = (ticketId: string, status: string) => {
-    dispatch({ type: "UPDATE_TICKET_STATUS", ticketId, status });
-  };
-
   return (
-    <ChatContext.Provider value={{ conversations: state.conversations, addMessage, updateConversation, updateTicketStatus }}>
+    <ChatContext.Provider value={{ conversations: state.conversations, addMessage, updateConversation }}>
       {children}
     </ChatContext.Provider>
   );
@@ -98,6 +84,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
 export function useChat() {
   const context = useContext(ChatContext);
-  if (undefined === context) throw new Error("useChat must be used within ChatProvider");
+  if (!context) throw new Error("useChat must be used within ChatProvider");
   return context;
 }
